@@ -16,7 +16,4 @@ ADD pg_hba.conf /etc/postgresql/9.3/main/pg_hba.conf
 ADD startup.sh /home/docker/startup.sh
 RUN chmod +x /home/docker/startup.sh
 
-#TODO: Move to Makefile (docker-run)
-VOLUME ["/var/lib/postgresql"]
-#TODO: Move to Makefile (docker-run)
 CMD ["/home/docker/startup.sh"]
