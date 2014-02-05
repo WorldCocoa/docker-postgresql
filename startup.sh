@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+POSTGRESQL_USER=${POSTGRESQL_USER:-"docker"}
+POSTGRESQL_PASS=${POSTGRESQL_PASS:-"docker"}
+POSTGRESQL_DB=${POSTGRESQL_DB:-"docker"}
+
+POSTGRESQL_BIN=/usr/lib/postgresql/9.3/bin/postgres
+POSTGRESQL_CONFIG_FILE=/etc/postgresql/9.3/main/postgresql.conf
+POSTGRESQL_DATA=/var/lib/postgresql/9.3/main
+
+if [ ! -d $POSTGRESQL_DATA ]; then
+    mkdir -p $POSTGRESQL_DATA
+    chown -R postgres:postgres $POSTGRESQL_DATA
+    sudo -u postgres /usr/lib/postgresql/9.3/bin/initdb -D $POSTGRESQL_DATA
+    ln -s /etc/ssl/certs/ssl-cert-snakeoil.pem $POSTGRESQL_DATA/server.crt
+    ln -s /etc/ssl/private/ssl-cert-snakeoil.key $POSTGRESQL_DATA/server.key
+fi
+
+sudo -u postgres $POSTGRESQL_BIN --single --config-file=$POSTGRESQL_CONFIG_FILE <<< "CREATE USER $POSTGRESQL_USER WITH SUPERUSER;"
+sudo -u postgres $POSTGRESQL_BIN --single --config-file=$POSTGRESQL_CONFIG_FILE <<< "ALTER USER $POSTGRESQL_USER WITH PASSWORD '$POSTGRESQL_PASS';"
+sudo -u postgres $POSTGRESQL_BIN --single --config-file=$POSTGRESQL_CONFIG_FILE <<< "CREATE DATABASE $POSTGRESQL_DB OWNER $POSTGRESQL_USER;"
+
+exec sudo -u postgres $POSTGRESQL_BIN --config-file=$POSTGRESQL_CONFIG_FILE
+
