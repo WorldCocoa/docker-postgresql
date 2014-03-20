@@ -1,6 +1,6 @@
-FROM ubuntu_base
+FROM tomgruner/globallometree-ubuntu-base
 
-MAINTAINER GlobAllomeTree "globallometree@fao.org"
+MAINTAINER Thomas Gruner "tom.gruner@gmail.com"
 
 #Add in the /home/docker directory
 ADD startup.sh /home/docker/startup.sh
@@ -17,11 +17,6 @@ ADD pg_hba.conf /etc/postgresql/9.3/main/pg_hba.conf
 #Update the servers default ssl certs
 RUN LC_ALL=en_US.UTF-8 DEBIAN_FRONTEND=noninteractive apt-get install -y ssl-cert
 RUN DEBIAN_FRONTEND=noninteractive make-ssl-cert generate-default-snakeoil --force-overwrite
-#Copy the certs over to a place where postgres can read and access them
-#RUN exec 'cp /etc/ssl/certs/ssl\-cert\-snakeoil.pem  /home/docker/ssl\-cert\-snakeoil.pem'
-#RUN exec 'cp /etc/ssl/private/ssl\-cert\-snakeoil.key /home/docker/ssl\-cert\-snakeoil.key'
-#RUN exec 'chown postgres.postgres /home/docker/ssl\-cert\-snakeoil.pem'
-#RUN exec 'chown postgres.postgres /home/docker/ssl\-cert\-snakeoil.key'
 
 RUN cp /etc/ssl/certs/ssl-cert-snakeoil.pem  /home/docker/ssl-cert-snakeoil.pem
 RUN cp /etc/ssl/private/ssl-cert-snakeoil.key /home/docker/ssl-cert-snakeoil.key
