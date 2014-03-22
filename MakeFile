@@ -1,47 +1,49 @@
 
-PSQL_TAG_NAME = tomgruner/postgresql
+PSQL_TAG_NAME ?= tomgruner/postgresql
+PSQL_CONTAINER_NAME ?= postgresql
 
 #Get the current directory of this Makefile as it may be included in other Makefiles
 #http://stackoverflow.com/questions/18136918/how-to-get-current-directory-of-your-makefile
-PSQL_PATH = $(abspath $(lastword $(MAKEFILE_LIST)))
-PSQL_DIR = $(abspath $(patsubst %/,%,$(dir $(PSQL_PATH))))
+PSQL_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+PSQL_DIR := $(abspath $(patsubst %/,%,$(dir $(PSQL_PATH))))
 
+_sleep10:
+	sleep 10
 
 #All names should be prefixed with psql
 psql-build:
 	echo ${PSQL_DIR} 
 	echo ${PSQL_PATH}
-
-	cd ${PSQL_DIR} && docker build -t {PSQL_TAG_NAME} .
+	cd ${PSQL_DIR} && docker build -t ${PSQL_TAG_NAME} .
 
 psql-clean:
-	-@docker stop postgresql_server 2>/dev/null || true
-	-@docker rm postgresql_server 2>/dev/null || true
+	-@docker stop ${PSQL_CONTAINER_NAME} 2>/dev/null || true
+	-@docker rm ${PSQL_CONTAINER_NAME} 2>/dev/null || true
 
-psql-init: psql-run sleep10 psql-create-db psql-import-db psql-stop 
+psql-init: psql-run _sleep10 psql-create-db psql-import-db psql-stop 
 
 psql-run: psql-clean
 	sudo mkdir -p /opt/
 	sudo mkdir -p /opt/data/
 	sudo mkdir -p /opt/data/postgresql
-	docker run -d -name postgresql_server -p 5432:5432 -v /opt/data/postgresql:/var/lib/postgresql -e POSTGRESQL_USER=${POSTGRESQL_USER} -e POSTGRESQL_PASS=${POSTGRESQL_PASS} -e POSTGRESQL_DB=${POSTGRESQL_DB} postgresql_server_image
+	docker run -d --name=${PSQL_CONTAINER_NAME} -p 5432:5432 -v /opt/data/postgresql:/var/lib/postgresql -e POSTGRESQL_USER=${POSTGRESQL_USER} -e POSTGRESQL_PASS=${POSTGRESQL_PASS} -e POSTGRESQL_DB=${POSTGRESQL_DB} ${PSQL_TAG_NAME} /home/docker/run.sh
 
 psql-stop:
 	docker stop postgresql_server
 
-#Force postgres to reinitialize everything which happens in the docker postgresql startup.sh script if db is not initialized
+#Force postgres to reinitialize everything which happens in the docker postgresql run.sh script if db is not initialized
 #TODO: Add a confirm here
 psql-delete-data-dir:
 	sudo rm -rf /opt/data/postgresql 
 
-#You must add the DUMP_FILE yourself and it should be a gzipped version of the GlobAllomeTree db
+#You must add the PSQL_DUMP_FILE yourself and it should be a gzipped version of the GlobAllomeTree db
 #This uses env vars to avoid the password prompt
 #http://www.postgresql.org/docs/current/static/libpq-envars.html
-#To use a different dump file, override the DUMP_FILE variable when calling Make
-#ex) make psql-import-db DUMP_FILE=../globallometree.import.sql.2.gz
+#To use a different dump file, override the PSQL_DUMP_FILE variable when calling Make
+#ex) make psql-import-db PSQL_DUMP_FILE=../globallometree.import.sql.2.gz
 #Note that $(PSQL) is defined at the beginning of the Makefile but evaluated when used below
 psql-import-db: 
-	gunzip -c $(DUMP_FILE) | $(PSQL)
+	gunzip -c $(PSQL_DUMP_FILE) | $(PSQL)
 
 psql-drop-db:
 	echo "DROP DATABASE  IF EXISTS  ${POSTGRESQL_DB};" | $(PSQL) postgres 
@@ -51,13 +53,19 @@ psql-create-db:
 
 psql-reset-db: psql-drop-db psql-create-db psql-import-db
 
+psql-run-sql:
+	echo	
+#"CREATE USER $POSTGRESQL_USER WITH SUPERUSER;"
+#"ALTER USER $POSTGRESQL_USER WITH PASSWORD '$POSTGRESQL_PASS';"
+
+
 psql-dump-db:
 	PGPASSWORD=$(POSTGRESQL_PASS) pg_dump -U $(POSTGRESQL_USER) -h $(shell TAG=postgresql_server_image ./server/ip_for.sh) $(POSTGRESQL_DB) | gzip > ../$(POSTGRESQL_DB).dump.`date +'%Y_%m_%d'`.sql.gz
 	@echo "database exported to ../${POSTGRESQL_DB}.`date +'%Y_%m_%d'`.sql.gz"
 
 #This does a full reset of postgres from a dump file
-#To use a different dump file, override the DUMP_FILE variable when calling Make
-#ex) make psql-reset-all DUMP_FILE=../globallometree.import.sql.2.gz
+#To use a different dump file, override the PSQL_DUMP_FILE variable when calling Make
+#ex) make psql-reset-all PSQL_DUMP_FILE=../globallometree.import.sql.2.gz
 psql-reset-all: psql-clean psql-delete-data-dir psql-init 
 	$(MAKE) psql-run
 
