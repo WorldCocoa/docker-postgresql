@@ -46,7 +46,7 @@ psql-shell:
 	$(PSQL)
 
 
-#Utility to hop into the postgres admin shell
+#Utility to hop into the postgres admin shell (selects the postgres database)
 psql-admin-shell:
 	$(PSQL) postgres
 
@@ -68,8 +68,8 @@ psql-drop-db:
 
 
 psql-create-db:
-	$(MAKE) psql-run-admin-sql SQL="CREATE DATABASE ${POSTGRESQL_DB} OWNER ${POSTGRESQL_USER} ENCODING 'UTF8' TEMPLATE template0;"
-	
+	echo "CREATE DATABASE ${POSTGRESQL_DB} OWNER ${POSTGRESQL_USER} ENCODING 'UTF8' TEMPLATE template0; " | $(PSQL) postgres
+
 
 psql-reset-db: psql-drop-db psql-create-db psql-import-db
 
@@ -130,7 +130,7 @@ psql-add-postgres-ubuntu-client: psql-add-postgres-ubuntu-repo
 
 
 #################################### !!! Experimental Piping of data (does not work as expected) !!! ##########################
-# #Uses the images postgresql client to send sql to the server
+# #Uses the images postgresql client to send sql to the server by piping data to it... in theory
 # psql-run-sql:
 # 	docker run --rm --link ${PSQL_SERVER_CONTAINER_NAME}:PSQL ${PSQL_USER_OPTS} -e SQL="${SQL}" ${PSQL_TAG_NAME} /home/docker/run.sql.sh
 
