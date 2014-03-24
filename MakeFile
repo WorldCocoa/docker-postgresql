@@ -1,15 +1,25 @@
 
 ##################################### VARIABLES #################################
 
-#These could already be set when this Makefile is included in the devtools/Makefile
-PSQL_TAG_NAME ?= tomgruner/postgresql
-PSQL_SERVER_CONTAINER_NAME ?= postgresql_server
-PSQL_PORT ?= 5432
 
 #Get the current directory of this Makefile as it may be included in other Makefiles
 #http://stackoverflow.com/questions/18136918/how-to-get-current-directory-of-your-makefile
 PSQL_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PSQL_DIR := $(abspath $(patsubst %/,%,$(dir $(PSQL_PATH))))
+
+#Get the path to the top most Makefile, or wherever this command was invoked from
+TOP_PATH := $(shell pwd)
+
+#These could already be set in the env or when this Makefile 
+#is included in the devtools/Makefile
+PSQL_TAG_NAME ?= tomgruner/globallometree-postgresql
+PSQL_SERVER_CONTAINER_NAME ?= postgresql_server
+PSQL_PORT ?= 5432
+PSQL_DUMP_FILE ?= ${TOP_PATH}/globallometree.dump.sql.gz
+POSTGRESQL_USER ?= globallometree
+POSTGRESQL_PASS ?= globallometree
+POSTGRESQL_DB   ?= globallometree
+
 
 #PSQL Server command line options
 PSQL_SERVER_OPTS = --name=${PSQL_SERVER_CONTAINER_NAME} 
@@ -30,16 +40,17 @@ PSQL = PGPASSWORD=$(POSTGRESQL_PASS) psql -U $(POSTGRESQL_USER) -h $(shell ${PSQ
 
 
 #Runs the PostgresSQL Server
-psql-run-server: psql-stop-server
+psql-run: psql-clean
 	docker run -d ${PSQL_SERVER_OPTS} ${PSQL_USER_OPTS} ${PSQL_TAG_NAME} /home/docker/run.server.sh
 
 
 #Stops the PostgresSQL Server
-psql-stop-server:
-	#Uses the - to handle the case that the container may not exist or may not be running
+psql-stop:
 	-@docker stop ${PSQL_SERVER_CONTAINER_NAME} 2>/dev/null || true
-	-@docker rm ${PSQL_SERVER_CONTAINER_NAME} 2>/dev/null || true
+	
 
+psql-clean: psql-stop
+	-@docker rm ${PSQL_SERVER_CONTAINER_NAME} 2>/dev/null || true
 
 #Hop into the shell and connect to the local database
 psql-shell:
@@ -76,7 +87,7 @@ psql-reset-db: psql-drop-db psql-create-db psql-import-db
 
 psql-dump-db:
 	PGPASSWORD=$(POSTGRESQL_PASS) pg_dump -U $(POSTGRESQL_USER) -h $(shell ${PSQL_DIR}/ip_for.sh ${PSQL_SERVER_CONTAINER_NAME}) $(POSTGRESQL_DB) | gzip > ../$(POSTGRESQL_DB).dump.`date +'%Y_%m_%d'`.sql.gz
-	@echo "database exported to ../${POSTGRESQL_DB}.`date +'%Y_%m_%d'`.sql.gz"
+	@echo "database exported to ${POSTGRESQL_DB}.`date +'%Y_%m_%d'`.sql.gz"
 
 
 ##################################### DOCKER BUILD AND SERVER INIT UTILS #################################
@@ -87,7 +98,7 @@ psql-build:
 	cd ${PSQL_DIR} && docker build -t ${PSQL_TAG_NAME} .
 
 
-psql-init: psql-stop-server psql-make-data-dir psql-run-server psql-sleep10 psql-create-db psql-import-db 
+psql-init: psql-stop psql-make-data-dir psql-run psql-sleep10 psql-create-db psql-import-db 
 
 
 psql-print-env:
@@ -103,8 +114,6 @@ psql-delete-data-dir:
 
 
 psql-make-data-dir:
-	sudo mkdir -p /opt/
-	sudo mkdir -p /opt/data/
 	sudo mkdir -p /opt/data/postgresql
 
 #This does a full reset of postgres from a dump file

@@ -25,12 +25,11 @@ RUN cp /etc/ssl/certs/ssl-cert-snakeoil.pem  /home/docker/ssl-cert-snakeoil.pem 
 
 ADD run.server.sh /home/docker/run.server.sh
 ADD run.sql.sh /home/docker/run.sql.sh
-ADD run.admin.sql.sh /home/docker/run.admin.sql.sh
-
+RUN chmod +x /home/docker/run.*
 
 ADD postgresql.conf /etc/postgresql/9.3/main/postgresql.conf
 ADD pg_hba.conf /etc/postgresql/9.3/main/pg_hba.conf
-RUN chmod +x /home/docker/run.*
+
 
 
 CMD ["/home/docker/run.sh"]
