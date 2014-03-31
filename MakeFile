@@ -12,13 +12,13 @@ TOP_PATH := $(shell pwd)
 
 #These could already be set in the env or when this Makefile 
 #is included in the devtools/Makefile
-PSQL_TAG_NAME ?= xela7/hatpull-postgresql
+PSQL_TAG_NAME ?= xela7/cocoamap-postgresql
 PSQL_SERVER_CONTAINER_NAME ?= postgresql_server
 PSQL_PORT ?= 5432
-PSQL_DUMP_FILE ?= ${TOP_PATH}/hatpull.dump.sql.gz
-POSTGRESQL_USER ?= hatpull
-POSTGRESQL_PASS ?= hatpull
-POSTGRESQL_DB   ?= hatpull
+PSQL_DUMP_FILE ?= ${TOP_PATH}/cocoamap.dump.sql.gz
+POSTGRESQL_USER ?= cocoamap
+POSTGRESQL_PASS ?= cocoamap
+POSTGRESQL_DB   ?= cocoamap
 
 
 #PSQL Server command line options

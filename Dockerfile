@@ -1,4 +1,4 @@
-FROM xela7/hatpull-base
+FROM xela7/cocoamap-base
 
 MAINTAINER Alex Tokar "alext@bitbamboo.com"
 
