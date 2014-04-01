@@ -82,7 +82,7 @@ psql-create-db:
 	echo "CREATE DATABASE ${POSTGRESQL_DB} OWNER ${POSTGRESQL_USER} ENCODING 'UTF8' TEMPLATE template0; " | $(PSQL) postgres
 
 
-psql-reset-db: psql-drop-db psql-create-db psql-import-db
+psql-reset-db: psql-drop-db psql-create-db
 
 
 psql-dump-db:
@@ -98,7 +98,7 @@ psql-build:
 	cd ${PSQL_DIR} && docker build -t ${PSQL_TAG_NAME} .
 
 
-psql-init: psql-stop psql-make-data-dir psql-run psql-sleep10 psql-create-db psql-import-db 
+psql-init: psql-stop psql-make-data-dir psql-run psql-sleep10 psql-create-db  
 
 
 psql-print-env:
