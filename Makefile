@@ -1,4 +1,3 @@
-
 ##################################### VARIABLES #################################
 
 
@@ -33,7 +32,7 @@ PSQL_USER_OPTS += -e POSTGRESQL_DB=${POSTGRESQL_DB}
 
 
 #For creating / dumping databases - requires the psql client 
-PSQL = PGPASSWORD=$(POSTGRESQL_PASS) psql -U $(POSTGRESQL_USER) -h $(shell ${PSQL_DIR}/ip_for.sh ${PSQL_SERVER_CONTAINER_NAME})
+PSQL = PGPASSWORD=$(POSTGRESQL_PASS) psql -U $(POSTGRESQL_USER) -h 127.0.0.1
 
 
 ##################################### RUN SERVER AND OTHER RUN FUNCTIONS #################################
